@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeLeaf.org">
+	<head>
+		<meta charset="UTF-8">
+
+ 		<script type="text/javascript" src="/js/jquery-3.6.0.js"></script>
+		<script type="text/javascript" src="/js/bootstrap.js"></script>
+		<!--<script type="text/javascript" src="/js/toastr.min.js"></script>-->
+		
+		<link href="/css/bootstrap.css" rel="stylesheet" th:href="@{/css/bootstrap.css}" />
+		<link href="/css/estilo_gral.css?version=1.01" rel="stylesheet" />
+		<!--  <link href="/css/toastr.min.css" rel="stylesheet" th:href="@{/css/toastr.min.css}" />-->
+		<link rel="shortcut icon" href="/images/favicon.png" />
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+ 		<meta name="_csrf" th:content="${_csrf.token}"/>
+ 		
+		<title>Clientes</title>
+	</head>
+	
+	<body>
+		<script src="/js/clientes.js?version=1.02" ></script>
+		<script src="/js/lib.js?version=1.06" ></script>
+		
+		<script type="text/javascript">
+			// Global: la selección en la lista "#menuModos". 
+			//			  Guarda el objeto 'option' seleccionado en esa lista. 
+			var modoSelecc;
+		
+			function cambioModo() {
+				// Acciones a seguir cuando se escoge una opción el el menú de modos.
+				modoSelecc = $('#menuModos').children(':selected');
+
+				if ( modoSelecc.val() == 'crear' )
+					$('#btnCrear').show();
+				else
+					$('#btnCrear').hide();
+
+				if ( modoSelecc.val() == 'x' )
+					$('#tablaDatos tbody').html('');
+				else
+					setTimeout( function() {ajax_listar()}, 500 );  // 500ms
+			}
+
+			$(document).ready(function() {
+				// Programo el evento clic sobre las filas de datos 
+				$("#tablaDatos tbody").on('click', 'tr', function() {
+					if ( modoSelecc.val() == 'crear' )
+						// El modo 'crear' se atiende a través del botón 'btnCrear'
+						return;
+						
+					// Cargo los datos de la fila selecc. para modif. o elim.
+					$('.modal-title').html(modoSelecc.html()+' cliente');
+					
+					$("#lblId").text( $(this).find('td').eq(0).text() );
+					$("#txtRut").val( $(this).find('td').eq(1).text() );
+					$("#txtNombre").val( $(this).find('td').eq(2).text() );
+					$("#txtDireccion").val( $(this).find('td').eq(3).text() );
+					$("#txtFono").val( $(this).find('td').eq(4).text() );
+					$("#txtEmail").val( $(this).find('td').eq(5).text() );
+					
+					// Abro el modal
+					$("#modalEdicion").modal('show');
+					
+					// Los inputs del modal quedan readonly en modo 'eliminar'
+					if ( modoSelecc.val() == 'eliminar' ) {
+						$('#inputsModal .input-sm').prop('readonly', true);
+						$('#btnOk').text('Eliminar');
+						$('#btnCancelar').focus();
+					}
+					else {
+						$('#inputsModal .input-sm').prop('readonly', false);
+						$('#btnOk').text('Grabar');
+						$('#txtRut').focus();
+					}
+				})
+
+				// Programo el evento clic del botón "btnCrear" 
+				$("#btnCrear").on('click', () => {nuevoCliente();})
+			})	
+		</script>
+	<div class="jumbotron mt-2">
+				<div class="row">
+					<div class="offset-2 col-8">
+						<h2>Clientes</h2>
+					</div>
+					<div class="col-2">
+						<a href="/menuInicio_pag.html">
+							<button class="btn btn-warning">Volver</button>
+						</a> 
+					</div>
+				</div>
+			</div>
+		
+			<div th:replace="fragments/complementos :: modos_agregar_mensajes"></div>
+			
+			<!--	Tabla para mostrar el listado -->
+			<div class="table-responsive" id="tableDivContainer">
+				<table class="table table-condensed table-bordered" id="tablaDatos"	data-toggle="table">
+					<thead>
+						<tr>
+							<th>#ID</th>
+							<th>RUT</th>
+							<th>Nombre</th>
+							<th>Direcci&oacute;n</th>
+							<th>Tel&eacute;fono</th>
+							<th>Correo electr&oacute;nico</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+
+			<div class="modal" id="modalEdicion">
+				<div class="modal-dialog">
+					<div class="modal-content">
+		
+						<!-- Modal Header -->
+						<div class="modal-header">
+							<h4 class="modal-title">
+								
+							</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+		
+						<!-- Modal body -->
+						<div class="modal-body">
+							<div class="form-group px-1" id="inputsModal">
+								<label class="label">ID:&nbsp;</label>
+								<label id="lblId" class="label ml-2" style="border:1;width:100px"></label>
+								
+								<br>
+								<label for="txtRut" class="label">RUT:</label>
+								<br>
+								<input class="input-sm" type="text" id="txtRut" style="width:25%;" maxlength="8">
+								
+								<br><br>
+								<label for="txtNombre" class="label">Nombre:</label>
+								<br>
+								<input class="input-sm" type="text" id="txtNombre" 
+										maxlength="60" style="text-transform:uppercase;width:100%">
+			
+								<br><br>
+								<label for="txtDireccion" class="label">Direcci&oacute;n:</label>
+								<br>
+								<input class="input-sm" type="text" id="txtDireccion" 
+										maxlength="60" style="text-transform:uppercase;width:100%">
+			
+								<br><br>
+								<label for="txtFono" class="label">Tel&eacute;fono:</label>
+								<br>
+								<input class="input-sm" type="text" id="txtFono" maxlength="20" style="width:40%">
+			
+								<br><br>
+								<label for="txtEmail" class="label">Correo electr&oacute;nico:</label>
+								<br>
+								<input class="input-sm" type="text" id="txtEmail" maxlength="50" 
+										style="width:90%">
+							</div>
+						</div>
+		
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<div class="btn-group">
+								<button type="button" id="btnOk" class="btn btn-success mx-1" onClick="accion()">
+									OK
+								</button>
+								<button type="button" id="btnCancelar" class="btn btn-danger mx-1" data-dismiss="modal">
+									Cerrar
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+				
+		</div>  
+
+		<footer th:replace="fragments/complementos :: pie_pagina"></footer>		
+	</body>
+</html>
